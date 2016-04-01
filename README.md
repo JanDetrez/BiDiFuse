@@ -1,2 +1,2 @@
 # BiDiFuse
-a FIJI plugin for fusing bi-directionally record-ed microscopic image volumes
+a FIJI plugin for fusing bi-directionally recorded microscopic image volumes
