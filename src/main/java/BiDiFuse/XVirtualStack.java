@@ -50,22 +50,28 @@ import mpicbg.models.InvertibleBoundable;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 //import net.imglib2.algorithm.transformation.ImageTransform;
 import net.imglib2.converter.TypeIdentity;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 //import net.imglib2.interpolation.randomaccess.ClampingNLinearInterpolatorFactory;
-//import net.imglib2.realtransform.AffineTransform3D;
-//import net.imglib2.realtransform.RealViews;
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.realtransform.RealViews;
+import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.integer.ByteType;
 import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
 //import net.imglib2.ui.overlay.LogoPainter;
 //import net.imglib2.ui.viewer.InteractiveViewer3D;
 import net.imglib2.view.TransformView;
 import net.imglib2.view.Views;
+import net.imglib2.Cursor;
+import net.imglib2.FinalRealInterval;
 
 /**
  *
@@ -259,25 +265,133 @@ public class XVirtualStack extends VirtualStack {
         //viewer.requestRepaint();
     }*/
 
+    public static < T extends Type< T > > Img< T > transformImage( RealRandomAccessible< T > source,
+        RealInterval interval, ImgFactory< T > factory, AffineTransform3D transform ) {
+        
+        int numDimensions = interval.numDimensions();
+        // compute the number of pixels of the output and the size of the real interval
+        long[] pixelSize = new long[ numDimensions ];
+        pixelSize = new long[]{100,100,5};
+        
+        // create the output image
+        Img< T > output = factory.create( pixelSize, source.realRandomAccess().get() );
+ 
+        // cursor to iterate over all pixels
+        Cursor< T > cursor = output.localizingCursor();
+ 
+        // create a RealRandomAccess on the source (interpolator)
+        RealRandomAccess< T > realRandomAccess = source.realRandomAccess();
+ 
+        // the temporary array to compute the position
+        double[] tmp = new double[ numDimensions ];
+ 
+        // for all pixels of the output image
+        double[] tmpLoc = {0,0,0};
+        while ( cursor.hasNext() )
+        {
+            cursor.fwd();
+ 
+            // compute the appropriate location of the interpolator
+            cursor.localize(tmpLoc);
+            transform.apply( tmp, tmpLoc );
+ 
+            // set the position
+            realRandomAccess.setPosition( tmp );
+ 
+            // set the new value
+            cursor.get().set( realRandomAccess.get() );
+        }
+        
+        return output;
+    }
+    
     public static void main( String[] args )
     {
-        // open an ImageJ window
-        new ImageJ();
-        
-        String pathRect = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackrecto.tif";
-        ImagePlus imp = IJ.openImage(pathRect);
-        
-        Image img = imagescience.image.Image.wrap(imp);
+        try {
+            // open an ImageJ window
+            new ImageJ();
+            
+            String pathRect = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackrecto.tif";
+            //ImagePlus imp = IJ.openImage(pathRect);
+            //imp.show();
+            
+            Img< ShortType > img;
+            img = new ImgOpener().openImgs( pathRect, new ShortType() ).get(0);
+            
+            // display image
+            ImageJFunctions.show( img );
+           
+            // use a View to define an interval (min and max coordinate, inclusive) to display
+            RandomAccessibleInterval< ShortType > view = 
+                    Views.interval( img, new long[] { 200, 200, 5 }, new long[]{ 500, 350, 10 } );
+            
+            ImageJFunctions.show( view );
+                  
+            // create an InterpolatorFactory RealRandomAccessible using linear interpolation
+            NLinearInterpolatorFactory< ShortType > facInterpolation =
+            new NLinearInterpolatorFactory< ShortType >();
+            
+            RealRandomAccessible< ShortType > interpolant = Views.interpolate(
+            Views.extendMirrorSingle( img ), facInterpolation );
+            
+            // define the area in the interpolated image
+            double[] min = new double[]{ 300, 400, 5 };
+            double[] max = new double[]{ 300, 400, 10 };
+ 
+            FinalRealInterval interval = new FinalRealInterval( min, max );
+            
+            
+            //Interval<FloatType> i = new Interval
+            //
+            final double yScale = 1.0, zScale = 1.0;
+            final AffineTransform3D transform = new AffineTransform3D();
+            transform.set(
+		1.0, 0.0, 0, 0,
+		0, yScale, 0, 0,
+        	0.0, 0.0, zScale, 0 );
+            transform.rotate(2, 45);
+            
+            Img< ShortType > out = transformImage( interpolant, interval, new ArrayImgFactory< ShortType >(), transform );
+            
+            ImageJFunctions.show( out );
 
-        img.imageplus().show();
-        
-        // run the example
-        Example1c();
-        //try {
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            //Views.extendZero();//.affine( view, initial);
+
+            
+            // use a View to define an interval (min and max coordinate, inclusive) to display
+            //RandomAccessible< FloatType > view =
+            //        Views.interval( img, new long[] { 200, 200 }, new long[]{ 500, 350 } );
+            
+            //ImageJFunctions.show((RandomAccessibleInterval<FloatType>) view);
+            
+            //Image img = imagescience.image.Image.wrap(imp);
+            
+            //img.imageplus().show();
+            
+            // run the example
+            //Example1c();
+            //try {
             //Example1d();
             //ExampleCatmaid();
-        //} catch (ImgIOException ex) {
+            //} catch (ImgIOException ex) {
 //            Logger.getLogger(XVirtualStack.class.getName()).log(Level.SEVERE, null, ex);
-  //      }
+//      }
+        } catch (ImgIOException ex) {
+            Logger.getLogger(XVirtualStack.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
