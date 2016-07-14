@@ -142,8 +142,7 @@ public class BiDiFuse_Fusion implements PlugIn {
                 this.imagedir = IJ.getDirectory("Select folder with fusion coordinates:");
             }
             this.tempDir = IJ.getDirectory("temp") + "/BiDiFuse_temp";
-            // TODO REMOVE logging
-            IJ.log("Temporary folder for virtual stack saving = " + this.tempDir);
+
             for ( int i = 0; i < idList.length; i++ ) {
                 ImagePlus image = WindowManager.getImage(idList[i]);
                 String imtitle = image.getTitle();
@@ -362,6 +361,7 @@ public class BiDiFuse_Fusion implements PlugIn {
         }
         if (rotateVirtual) {
             IJ.log("Prepare image stack B for rotation (virtual)");
+            IJ.log("Temporary folder for virtual stack saving = " + this.tempDir);
             //VirtualStack vs = new VirtualStack(virtualStack.getWidth(), virtualStack.getHeight(), null, "outputPath");
             //ImageStack stack = virtualStack.getStack();
             //int n = stack.getSize();
@@ -419,7 +419,7 @@ public class BiDiFuse_Fusion implements PlugIn {
             stackB_transformJ.getProcessor().resetRoi();
 
             // Z_ANGLE 1
-            IJ.log("Preparing for rotation: aligning primary axes (Virtual)");
+            IJ.log("Preparing image stack B for rotation (Virtual)");
             String stackB_transformJ_String = rotateVirtualStack( stackB_transformJ, Z_angle_deg_B_P1P2, interpolation, path + "/", format );
             stackB_transformJ = fo.openFolder(stackB_transformJ_String);
             
