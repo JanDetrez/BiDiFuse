@@ -103,7 +103,7 @@ public class BiDiFuse_Fusion implements PlugIn {
     final static String ORIENTATION_YZ = "yz-plane";
     final static String ORIENTATION_XY = "xy-plane";
 
-    boolean debug = true;
+    boolean debug = false;
 
     String imagedir = null;
     String tempDir = null;
@@ -1290,15 +1290,15 @@ public class BiDiFuse_Fusion implements PlugIn {
 //        String pathVers = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/MB/bol/BiDiFuse_7008brainx10Wz1Ex543stackverso-ZC-NS.tif";
 //        String pathRect = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/_Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/BiDiFuse_7008brainx10Wz1Ex543stackrecto-ZC.tif";
 //        String pathVers = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/_Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/BiDiFuse_7008brainx10Wz1Ex543stackverso-ZC.tif";
-        String pathRect = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackrecto.tif";
-        String pathVers = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackverso.tif";
+//        String pathRect = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackrecto.tif";
+//        String pathVers = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackverso.tif";
 //        String pathRect = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/MB/BiDiFuse_nstack A.tif";
 //        String pathVers = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/MB/BiDiFuse_nstack B.tif";
 //        String pathRect = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/JD/BiDiFuse_Stack A.tif";
 //        String pathVers = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/JD/BiDiFuse_Stack B.tif";
 
-//        String pathRect = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack A.tif";
-//        String pathVers = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack B.tif";
+        String pathRect = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack A.tif";
+        String pathVers = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack B.tif";
 
         //String pathRect = "/Users/marliesverschuuren/Dropbox/PhD/General_Scripts/Fiji/PlugIn/BiDiFuse_160629/test BiDiFuse/BiDiFuse_Stack A2.tif";
         //String pathVers = "/Users/marliesverschuuren/Dropbox/PhD/General_Scripts/Fiji/PlugIn/BiDiFuse_160629/test BiDiFuse/BiDiFuse_Stack B2.tif";
