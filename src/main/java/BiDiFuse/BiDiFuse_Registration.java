@@ -27,6 +27,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Macro;
 import ij.WindowManager;
+import ij.gui.TextRoi;
 import ij.gui.YesNoCancelDialog;
 import ij.plugin.*;
 import ij.plugin.frame.RoiManager;
@@ -452,8 +453,8 @@ public class BiDiFuse_Registration implements PlugIn {
             
             //IJ.run(stackA_dup, "RGB Color", "");
             Overlay overlay = new Overlay();
-            double fontSizeFactor = 3;
-            double radiusFactor = 2;
+            double fontSizeFactor = 2;
+            double radiusFactor = 0.8;
             double labelSizeFactor = 0.01;
             double labelSize = labelSizeFactor * ( stackA_dup.getWidth() + stackA_dup.getHeight() ) / 2.0 ;
             radius = (int) Math.round( radiusFactor * labelSize );
@@ -476,12 +477,28 @@ public class BiDiFuse_Registration implements PlugIn {
             roi.setStrokeWidth(strokeWidth);
             roi.setStrokeColor(Color.red);
             overlay.add(roi);
+
             int fontSize = (int) Math.round( fontSizeFactor * labelSize );
-            Font font = new Font(Font.SANS_SERIF, Font.PLAIN, fontSize );
-            overlay.setLabelFont(font);
-            overlay.drawLabels(true);
-            overlay.setLabelColor(Color.red);
-            overlay.drawNames(true);
+            Font font = new Font(Font.SANS_SERIF, Font.BOLD, fontSize );
+
+            TextRoi roiT;
+            roiT = new TextRoi(xStackA_P1_pixels + radius, yStackA_P1_pixels + radius, "1", font);
+            roiT.setStrokeColor(Color.RED);
+            roiT.setPosition(this.stackA_P1_sliceNr);
+            overlay.add(roiT);
+            roiT = new TextRoi(xStackA_P2_pixels + radius, yStackA_P2_pixels + radius, "2", font);
+            roiT.setStrokeColor(Color.RED);
+            roiT.setPosition(this.stackA_P2_sliceNr);
+            overlay.add(roiT);
+            roiT = new TextRoi(xStackA_P3_pixels + radius, yStackA_P3_pixels + radius, "3", font);
+            roiT.setStrokeColor(Color.RED);
+            roiT.setPosition(this.stackA_P3_sliceNr);
+            overlay.add(roiT);
+
+            //overlay.setLabelFont(font);
+            overlay.drawLabels(false);
+            //overlay.setLabelColor(Color.red);
+            //overlay.drawNames(true);
             stackA_dup.setOverlay(overlay);
             stackA_dup.setHideOverlay(false);
             IJ.run(stackA_dup, "Select None", "");
@@ -618,11 +635,11 @@ public class BiDiFuse_Registration implements PlugIn {
 //        String pathVers = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/JD/MC/Stack B.tif";
         //String pathRect = "C:/Users/Michael/Desktop/bidifuse_temp/BiDiFuse_Stack A-1.tif";
         //String pathVers = "C:/Users/Michael/Desktop/bidifuse_temp/BiDiFuse_Stack B-1.tif";
-        String pathRect = "C:/Users/Michael/Desktop/MB/Stack A.tif";
-        String pathVers = "C:/Users/Michael/Desktop/MB/Stack B.tif";
+        //String pathRect = "C:/Users/Michael/Desktop/MB/Stack A.tif";
+        //String pathVers = "C:/Users/Michael/Desktop/MB/Stack B.tif";
 
-//        String pathRect = "C:/Users/Michael/Desktop/7008brainx10Wz1Ex543stackrecto.tif";
-//        String pathVers = "C:/Users/Michael/Desktop/7008brainx10Wz1Ex543stackverso.tif";
+        String pathRect = "C:/Users/Michael/Desktop/MB/7008brainx10Wz1Ex543stackrecto.tif";
+        String pathVers = "C:/Users/Michael/Desktop/MB/7008brainx10Wz1Ex543stackverso.tif";
 
         //String pathRect = "/Users/marliesverschuuren/Dropbox/PhD/General_Scripts/Fiji/PlugIn/BiDiFuse_160629_MV/test BiDiFuse/Stack A2.tif";
         //String pathVers = "/Users/marliesverschuuren/Dropbox/PhD/General_Scripts/Fiji/PlugIn/BiDiFuse_160629_MV/test BiDiFuse/Stack B2.tif";
