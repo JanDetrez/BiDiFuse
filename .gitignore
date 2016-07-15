@@ -4,7 +4,7 @@
 /.settings/
 
 /target/*
-!target/BiDiFuse_Plugin-0.1.0-jar
+!target/BiDiFuse_Plugin-0.1.0.jar
 
 =======
 *.class
