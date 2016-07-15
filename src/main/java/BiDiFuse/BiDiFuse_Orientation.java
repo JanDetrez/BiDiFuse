@@ -146,9 +146,10 @@ public class BiDiFuse_Orientation {
         label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
         win.add(label, winConstraints);
         winConstraints.gridy++;
-        //winConstraints.insets = new Insets(0, 5, 6, 5);
-        //label = new JLabel("    (Stack A: high to low quality; stack B: low to high quality)");
-        //win.add(label, winConstraints);
+        winConstraints.insets = new Insets(0, 5, 6, 5);
+        label = new JLabel("    (Stack A: high to low quality; stack B: low to high quality)");
+        label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
+        win.add(label, winConstraints);
         winConstraints.insets = new Insets(6, 5, 0, 5);
         winConstraints.gridy++;
         label = new JLabel("> Mirror the images, so the stacks have the same orientation");
@@ -237,52 +238,55 @@ public class BiDiFuse_Orientation {
             exec.submit(new Runnable() {
                 public void run() {
                     ImagePlus imp_all_channels = WindowManager.getCurrentImage();
-                    ImageStack is = ChannelSplitter.getChannel(imp_all_channels, 1);
-                    ImagePlus imp = new ImagePlus( "temp_channel", is );
+                    ImageStack is = null;
+                    ImagePlus imp = null;
+                    //imp_all_channels.setOpenAsHyperStack(true);
                     int nChannels = imp_all_channels.getNChannels();
-                    for ( int j = 1; j <= nChannels; j++ ) {
-                        imp = new ImagePlus( "temp stack for orientation channel", ChannelSplitter.getChannel(imp_all_channels, j) );
-                        if (e.getSource() == zFlipButton) {
-                            StackReverser sr = new StackReverser();
-                            sr.flipStack(imp);
-                            //for (int i = 1; i <= imp.getNSlices(); i++) {
-                            //    is = imp.getImageStack();
-                            //    ImageStack is2 = new ImageStack();
-                            //    ImageProcessor tip = imp.getImageStack().getProcessor(i);
-                            //    ImageProcessor tip_last = imp.getImageStack().getProcessor(imp.getNSlices()-i+1)
-                            //    imp.getImageStack().setProcessor( , i);
-                            //    imp.setSlice(i);
-                            //    imp.getProcessor().flipHorizontal();
-                            //}
-                            //IJ.run(imp, "Reverse", "");
-                            //IJ.run(imp, "Flip Z", "");
-                        } else if (e.getSource() == horizontalFlip) {
-                            int sliceNumber = imp.getCurrentSlice();
-                            for (int i = 1; i <= imp.getNSlices(); i++) {
-                                imp.setSlice(i);
-                                imp.getProcessor().flipHorizontal();
+                    int nSlices = imp_all_channels.getNSlices();
+
+                    if (e.getSource() == zFlipButton) {
+                            //IJ.log("Flip stack: "+ imp_all_channels.getTitle() + " in z");
+                            // TODO don't make duplicate of the stack, remove slice from top of one stack and add to the bottom of the stack of an initially empty stack
+                            ImagePlus imp_dup = imp_all_channels.duplicate();
+                            for ( int j = 1; j <= nChannels; j++ ) {
+                                for(int i = 1; i <= nSlices; i++) {
+                                    imp_dup.setPosition( j, i, 1);
+                                    imp_all_channels.setPosition( j, nSlices - i + 1, 1 );
+                                    imp_all_channels.setProcessor( imp_dup.getProcessor().duplicate() );
+                                }
                             }
-                            imp.setSlice(sliceNumber);
-                        } else if (e.getSource() == verticalFlip) {
-                            int sliceNumber = imp.getCurrentSlice();
-                            for (int i = 1; i <= imp.getNSlices(); i++) {
-                                imp.setSlice(i);
-                                imp.getProcessor().flipVertical();
+                            imp_dup = null;
+                        } else if ( ( e.getSource() == horizontalFlip ) || ( e.getSource() == verticalFlip ) ) {
+                            for ( int j = 1; j <= nChannels; j++ ) {
+                                imp_all_channels.setC(j);
+                                is = ChannelSplitter.getChannel(imp_all_channels, j);
+                                imp = new ImagePlus( "temp stack for orientation channel", is );
+                                if (e.getSource() == horizontalFlip) {
+                                    //IJ.log("Horizontally flip stack: "+ imp_all_channels.getTitle() );
+                                    int sliceNumber = imp.getCurrentSlice();
+                                    for (int i = 1; i <= imp.getNSlices(); i++) {
+                                        imp.setSlice(i);
+                                        imp.getProcessor().flipHorizontal();
+                                    }
+                                    imp.setSlice(sliceNumber);
+                                }
+                                if ( e.getSource() == verticalFlip ) {
+                                    //IJ.log("Vertically flip stack: "+ imp_all_channels.getTitle() );
+                                    int sliceNumber = imp.getCurrentSlice();
+                                    for (int i = 1; i <= imp.getNSlices(); i++) {
+                                        imp.setSlice(i);
+                                        imp.getProcessor().flipVertical();
+                                    }
+                                    imp.setSlice(sliceNumber);
+                                }
                             }
-                            imp.setSlice(sliceNumber);
                         } else if (e.getSource() == helpCheckBox) {
-                            // TODO: we do this for every channel: this is not necessary
                             enableHelp = true;
                         } else if (e.getSource() == startButton) {
-                            // TODO: we do this for every channel: this is not necessary
                             start = true;
                         }
                     }
-                }
-            }
-            );
+            });
         }
-
     };
-
 }
