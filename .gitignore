@@ -4,10 +4,7 @@
 /.settings/
 
 /target/*
-!target/BiDiFuse*
-
-application/cache/folder/*
-!application/cache/folder/.gitkeep
+!target/BiDiFuse_Plugin-0.1.0-jar
 
 =======
 *.class
@@ -21,8 +18,8 @@ application/cache/folder/*
 *.ear
 *.ijm
 *desktop.ini
-nbactions*
-nb-configuration.xml
+*nbactions*
+*nb-configuration*
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*

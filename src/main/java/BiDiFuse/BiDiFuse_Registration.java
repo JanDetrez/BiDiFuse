@@ -618,8 +618,8 @@ public class BiDiFuse_Registration implements PlugIn {
 //        String pathVers = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/JD/MC/Stack B.tif";
         //String pathRect = "C:/Users/Michael/Desktop/bidifuse_temp/BiDiFuse_Stack A-1.tif";
         //String pathVers = "C:/Users/Michael/Desktop/bidifuse_temp/BiDiFuse_Stack B-1.tif";
-        String pathRect = "C:/Users/Michael/Desktop/MB/Stack A.tif";
-        String pathVers = "C:/Users/Michael/Desktop/MB/Stack B.tif";
+        String pathRect = "C:/Users/Michael/Desktop/MB/Stack A-1.tif";
+        String pathVers = "C:/Users/Michael/Desktop/MB/Stack B-1.tif";
 
 //        String pathRect = "C:/Users/Michael/Desktop/7008brainx10Wz1Ex543stackrecto.tif";
 //        String pathVers = "C:/Users/Michael/Desktop/7008brainx10Wz1Ex543stackverso.tif";
