@@ -133,6 +133,9 @@ public class BiDiFuse_Fusion implements PlugIn {
         } else if (idList.length < 2) {
             MessageDialog md = new MessageDialog(new Frame(), "BiDiFuse", "No images found. BiDiFuse Fusion requires that two images are open.");
             throw new RuntimeException(Macro.MACRO_CANCELED);
+        } else if (idList.length > 2) {
+            MessageDialog md = new MessageDialog(new Frame(), "BiDiFuse", "Too many images found. BiDiFuse Fusion requires that only two images are open.");
+            throw new RuntimeException(Macro.MACRO_CANCELED);
         } else if (!WindowManager.getImage(idList[0]).getTitle().contains("BiDiFuse") || !WindowManager.getImage(idList[1]).getTitle().contains("BiDiFuse")) {
             MessageDialog md = new MessageDialog(new Frame(), "BiDiFuse", "Run BiDiFuse Registration or open BiDiFuse images");
             throw new RuntimeException(Macro.MACRO_CANCELED);
