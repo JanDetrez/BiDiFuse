@@ -142,8 +142,7 @@ public class BiDiFuse_Fusion implements PlugIn {
                 this.imagedir = IJ.getDirectory("Select folder with fusion coordinates:");
             }
             this.tempDir = IJ.getDirectory("temp") + "/BiDiFuse_temp";
-            // TODO REMOVE logging
-            IJ.log("Temporary folder for virtual stack saving = " + this.tempDir);
+
             for ( int i = 0; i < idList.length; i++ ) {
                 ImagePlus image = WindowManager.getImage(idList[i]);
                 String imtitle = image.getTitle();
@@ -353,7 +352,6 @@ public class BiDiFuse_Fusion implements PlugIn {
         //***************************************//
         ImagePlus stackB_translate;
 
-        
         int nPath = 0;
         String base = this.tempDir;
         try {
@@ -362,10 +360,7 @@ public class BiDiFuse_Fusion implements PlugIn {
         }
         if (rotateVirtual) {
             IJ.log("Prepare image stack B for rotation (virtual)");
-            //VirtualStack vs = new VirtualStack(virtualStack.getWidth(), virtualStack.getHeight(), null, "outputPath");
-            //ImageStack stack = virtualStack.getStack();
-            //int n = stack.getSize();
-            //Calibration cal = virtualStack.getCalibration();
+            IJ.log("Temporary folder for virtual stack saving = " + this.tempDir);
             String path = makePath(base, nPath); nPath++;
             VirtualStack vs = new VirtualStack( maximum_canvas, maximum_canvas, stackB_Channel.getProcessor().getColorModel(), path);
             for (int i = 1; i < stackB_slices + 1; i++) {
@@ -380,20 +375,17 @@ public class BiDiFuse_Fusion implements PlugIn {
             fo.openAsVirtualStack(true);
             stackB_translate = fo.openFolder(path);
             stackB_translate.setTitle("stackB_translate - channel " + channel_to_rotate);
-//new ImagePlus( "stackB_translate - channel " + channel_to_rotate, vs);
-            //        IJ.createVirtualStack("stackB_translate - channel " + channel_to_rotate, original_bitdepth + "-bit black", maximum_canvas, maximum_canvas, stackB_slices);
         } else {
             IJ.log("Prepare image stack B for rotation (in memory)");
             stackB_translate = IJ.createImage("stackB_translate - channel " + channel_to_rotate, original_bitdepth + "-bit black", maximum_canvas, maximum_canvas, stackB_slices);
+            for (int i = 1; i < stackB_slices + 1; i++) {
+                this.stackB_Channel.setSlice(i);
+                stackB_translate.setSlice(i);
+                stackB_translate.getProcessor().copyBits( this.stackB_Channel.getProcessor(), maximum_canvas / 2 - xStackB_P1_pixels, maximum_canvas / 2 - yStackB_P1_pixels, Blitter.COPY);
+                stackB_translate.getProcessor().resetRoi();
+            }
         }
-        //ImagePlus stackB_translate = IJ.createImage("stackB_translate - channel " + channel_to_rotate, original_bitdepth + "-bit black", maximum_canvas, maximum_canvas, 2*halfSize);
         stackB_translate.setCalibration(cal);
-        for (int i = 1; i < stackB_slices + 1; i++) {
-            this.stackB_Channel.setSlice(i);
-            stackB_translate.setSlice(i);
-            stackB_translate.getProcessor().copyBits( this.stackB_Channel.getProcessor(), maximum_canvas / 2 - xStackB_P1_pixels, maximum_canvas / 2 - yStackB_P1_pixels, Blitter.COPY);
-            stackB_translate.getProcessor().resetRoi();
-        }
         //Debug
         if (debug) {
             stackB_translate.show();
@@ -413,13 +405,14 @@ public class BiDiFuse_Fusion implements PlugIn {
             Calibration cm = cal;
             String format = "TIFF";
             FolderOpener fo = new FolderOpener();
+            fo.openAsVirtualStack(true);
             String path = makePath(base, nPath);
             String oldPath = path;
             nPath++;
             stackB_transformJ.getProcessor().resetRoi();
 
             // Z_ANGLE 1
-            IJ.log("Preparing for rotation: aligning primary axes (Virtual)");
+            IJ.log("Preparing image stack B for rotation (Virtual)");
             String stackB_transformJ_String = rotateVirtualStack( stackB_transformJ, Z_angle_deg_B_P1P2, interpolation, path + "/", format );
             stackB_transformJ = fo.openFolder(stackB_transformJ_String);
             
@@ -1297,8 +1290,8 @@ public class BiDiFuse_Fusion implements PlugIn {
 //        String pathRect = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/JD/BiDiFuse_Stack A.tif";
 //        String pathVers = "C:/Users/Michael/Google Drive/Manuscripts/Submitted/Detrez et al., BI (BIOINF-2016-0580)/BiDiFuse Plugin/BiDiFuse Plugin Demo Data/JD/BiDiFuse_Stack B.tif";
 
-        String pathRect = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack A.tif";
-        String pathVers = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack B.tif";
+        String pathRect = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack A-1.tif";
+        String pathVers = "C:/Users/Michael/Desktop/MB/BiDiFuse_Stack B-1.tif";
 
         //String pathRect = "/Users/marliesverschuuren/Dropbox/PhD/General_Scripts/Fiji/PlugIn/BiDiFuse_160629/test BiDiFuse/BiDiFuse_Stack A2.tif";
         //String pathVers = "/Users/marliesverschuuren/Dropbox/PhD/General_Scripts/Fiji/PlugIn/BiDiFuse_160629/test BiDiFuse/BiDiFuse_Stack B2.tif";
