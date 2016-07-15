@@ -37,6 +37,7 @@ import ij.plugin.WindowOrganizer;
 import ij.plugin.Duplicator;
 import ij.plugin.FolderOpener;
 import ij.plugin.PlugIn;
+import static ij.plugin.RGBStackMerge.mergeChannels;
 import ij.plugin.StackReverser;
 import ij.plugin.filter.ThresholdToSelection;
 import ij.process.Blitter;
@@ -419,47 +420,10 @@ public class BiDiFuse_Fusion implements PlugIn {
             String stackB_transformJ_String = rotateVirtualStack( stackB_transformJ, Z_angle_deg_B_P1P2, interpolation, path + "/", format );
             stackB_transformJ = fo.openFolder(stackB_transformJ_String);
             
-            
             IJ.log("Rotation over X-axis and Y-axis (Virtual)");
             // X_ANGLE - Y_ANGLE
             if ((Math.abs(Y_angle_deg) + Math.abs(X_angle_deg)) > 0) {
  
-/*               
-                // Paste origin (xStackB_P1_pixels,yStackB_P1_pixels,zStackB_P1) in image centre 
-                // Add extra slices
-                int extraSlice=0;
-                int halfSize = Math.max( zStackB_P1, stackB_slices - zStackB_P1 ) + extraSlice;
-                int indexTranslated;
-                //Calculate new positons z
-                if( zStackB_P1 < (stackB_slices - zStackB_P1) ) {
-
-                    indexTranslated = halfSize - zStackB_P1; //+ 1
-                    //Add extra slices
-                    ImagePlus stackB_pre = IJ.createImage("stackB_pre", original_bitdepth + "-bit black", maximum_canvas, maximum_canvas, indexTranslated-1 );
-                    ImageStack s1 = stackB_transformJ.getImageStack();
-                    s1 = concat( stackB_pre.getImageStack(), s1 );
-                    //stackB_transformJ = null;
-                    stackB_transformJ = new ImagePlus( "B added slices", s1 );
-                    stackB_pre = null;
-                    s1 = null;
-                    stackB_transformJ.setCalibration(cal);
-                    
-                    // Rotation
-                    if (debug) {
-                        stackB_transformJ.duplicate().show();
-                    }
-                    stackB_transformJ = (rt.run(imagescience.image.Image.wrap(stackB_transformJ), 0, Y_angle_deg, X_angle_deg, interpolation, false, false, false)).imageplus();
-                    if (debug) {
-                        stackB_transformJ.duplicate().show();
-                    }
-                    
-                    //Remove extra slices again
-                    ImageStack s = stackB_transformJ.getImageStack();
-                    stackB_transformJ.setStack( stackB_transformJ.getImageStack().crop(0, 0, indexTranslated-1, s.getWidth(), s.getHeight(), stackB_slices) );
-*/
-                
-                
-                
                 // X_ANGLE
                 Calibration cx = cm;
                 cx.pixelHeight = cm.pixelDepth;
@@ -521,7 +485,6 @@ public class BiDiFuse_Fusion implements PlugIn {
             //deletePath(oldPath);
             stackB_transformJ = fo.openFolder(stackB_transformJ_String);
             stackB_transformJ.setTitle("After Virtual TransformJ - channel " + channel_to_rotate);
-            IJ.log("Removing virtual stacks from disk (Virtual)");
             //deletePath(tempDir);
 
         } // Non virtual
@@ -645,15 +608,17 @@ public class BiDiFuse_Fusion implements PlugIn {
         //Trim stackB stack to FOV
         int distance_stackB_P1_minX = stackB_transformJ.getWidth()/2 - minX;
         int distance_stackB_P1_minY = stackB_transformJ.getHeight()/2 - minY;
-        //int distance_stackB_P1_minX = centerX - minX;
-        //int distance_stackB_P1_minY = centerY - minY;
         int pastelengthX = maxX - minX;
         int pastelengthY = maxY - minY;
         stackB_transformJ.setRoi(new Rectangle(minX, minY, pastelengthX, pastelengthY));
         ImagePlus stackB_transformJCrop = stackB_transformJ.duplicate();
         stackB_transformJCrop.setTitle("stackB_transformJCrop - channel " + channel_to_rotate);
 
-        //stackB_transformJ = null;
+        if (rotateVirtual) {
+            IJ.log("Removing virtual stacks from disk (Virtual)");
+            deletePath(tempDir);
+        }
+        
         if (debug) {
             stackB_transformJCrop.show();
         }
@@ -663,21 +628,13 @@ public class BiDiFuse_Fusion implements PlugIn {
         //****************************************//
         Rectangle rect = null;
         if ( postRegistration ) {
-            //stackB_transformJCrop.duplicate().show();
             stackB_transformJCrop.setSlice( zStackB_P1 );
             stackA_Channel.setSlice( zStackA_P1 );
             ImagePlus dupA = new ImagePlus("stack A registration slice P1", stackA_Channel.getProcessor());
             ImagePlus dupB = new ImagePlus("stack B registration slice P1", stackB_transformJCrop.getProcessor());
-            //IJ.cr
             ImagePlus translated_dupA = IJ.createImage("translated A slice", dupB.getWidth(), dupB.getHeight(), 1, dupB.getBitDepth());
             translated_dupA.getProcessor().copyBits( dupA.getProcessor(), distance_stackB_P1_minX - xStackA_P1_pixels, distance_stackB_P1_minY - yStackA_P1_pixels, Blitter.COPY);
-            //translated_dupA.show();
             ImagePlus alignedStack = Correlation.alignStack( dupB, translated_dupA, stackB_transformJCrop );
-            //Roi centerRoi = alignedStack.getRoi();
-            //rect = centerRoi.getBounds();
-            //dupA.show();
-            //dupB.show();
-            //alignedStack.show();
             stackB_transformJCrop = alignedStack;
             stackB_transformJCrop.deleteRoi();
             if ( rect != null ) {
@@ -692,8 +649,12 @@ public class BiDiFuse_Fusion implements PlugIn {
         //**********************************//
         //***  Generate Composite image  ***//
         //**********************************//
+        // TODO
         //Concatenator c = new Concatenator();
-        
+        //stackB_transformJCrop
+        //stackA_Channel.getStack()
+        //ImagePlus merged = mergeChannels(new ImagePlus[]{stackB_transformJCrop, stackA_Channel}, true);
+        //merged.show();
         //ImagePlus impMergedA = IJ.createImage("A", width, height, nPath, width)c.concatenate( stackB_Channel, stackB_transformJCrop, true );
         //for (int i = 1; i < stackA_slices+1; i++) {
         //    stackA_Channel.setSlice(i);
