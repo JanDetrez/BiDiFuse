@@ -180,7 +180,7 @@ public class BiDiFuse_Orientation {
         win.add(label, winConstraints);
         winConstraints.gridy++;
         winConstraints.gridwidth=2;
-        label = new JLabel("Set one of the image stacks (and channel) as active window");
+        label = new JLabel("Set image stack A (and the preferred registration channel) as active window");
         label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
         win.add(label, winConstraints);
         winConstraints.gridy++;

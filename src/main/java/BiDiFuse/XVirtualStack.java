@@ -18,51 +18,44 @@
 
 package BiDiFuse;
 
-import static BiDiFuse.BiDiFuse_Fusion.ORIENTATION_XY;
-import static BiDiFuse.BiDiFuse_Fusion.ORIENTATION_YZ;
-import static BiDiFuse.BiDiFuse_Fusion.ORIENTATION_XZ;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.VirtualStack;
-import ij.gui.NewImage;
-import ij.process.Blitter;
-import ij.process.ImageProcessor;
-import java.awt.Rectangle;
-import java.awt.image.ColorModel;
 //import bdv.img.virtualstack.*;
 //import mpicbg.spim.data.generic.sequence.BasicImgLoader;
 //import mpicbg.spim.data.generic.sequence.BasicImgLoader;
 import ij.ImageJ;
-import imagescience.image.Image;
+import ij.gui.Roi;
+import ij.measure.Calibration;
+import ij.plugin.FolderOpener;
+import ij.plugin.Slicer;
+import imagescience.transform.Rotate;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.cell.CellImgFactory;
 //import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
+import java.io.File;
+import java.io.FilenameFilter;
+
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import mpicbg.models.AffineModel2D;
-import mpicbg.models.AffineModel3D;
-import mpicbg.models.InvertibleBoundable;
-import net.imglib2.Interval;
+import java.util.regex.Pattern;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 //import net.imglib2.algorithm.transformation.ImageTransform;
-import net.imglib2.converter.TypeIdentity;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 //import net.imglib2.interpolation.randomaccess.ClampingNLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.realtransform.RealViews;
 import net.imglib2.type.Type;
-import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.ByteType;
 import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -72,6 +65,14 @@ import net.imglib2.view.TransformView;
 import net.imglib2.view.Views;
 import net.imglib2.Cursor;
 import net.imglib2.FinalRealInterval;
+//import net.imglib2.view.StackView;
+
+//import loci.formats.FilePattern;
+//import loci.formats.ImageReader;
+import net.imglib2.FinalInterval;
+import net.imglib2.transform.integer.TranslationTransform;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.NumericType;
 
 /**
  *
@@ -270,8 +271,11 @@ public class XVirtualStack extends VirtualStack {
         
         int numDimensions = interval.numDimensions();
         // compute the number of pixels of the output and the size of the real interval
-        long[] pixelSize = new long[ numDimensions ];
-        pixelSize = new long[]{100,100,5};
+        //long[] pixelSize = new long[ numDimensions ];
+        long[] pixelSize = {1000,1000,100};
+        //FinalRealInterval pixelSizeReal = transform.estimateBounds(interval);
+        //interval.
+        //Dimensions dims = pixelSizeReal
         
         // create the output image
         Img< T > output = factory.create( pixelSize, source.realRandomAccess().get() );
@@ -305,16 +309,85 @@ public class XVirtualStack extends VirtualStack {
         return output;
     }
     
-    public static void main( String[] args )
-    {
+    public static ImagePlus openFolderOfStacks( String folder ) {
+        
+        FolderOpener fo = new FolderOpener();
+        fo.openAsVirtualStack(true);
+        
+        ImagePlus imp = fo.open( folder );
+        imp.show();
+
+        return imp;
+    }
+
+    public static ImagePlus resliceTest( String tempSubDir, ImagePlus imp, double angle, String direction, int interpolation ) {
+
+        int nFactor = 10;
+
+        // RESLICE: per 50 lijnen wegschrijven = minder beelden schrijven/lezen per keer.
+        Date date = new Date();
+        IJ.log("Start reslicing: " + date.toString() );
+        long timeStart = System.currentTimeMillis();
+
+        Calibration cal = imp.getCalibration();
+        Calibration cal2 = new Calibration();
+        int nStep = 0;
+        int nSlices = 0;
+        if (direction == BiDiFuse_Fusion.ORIENTATION_XZ ) {
+            nSlices = imp.getWidth();
+            nStep = Math.round( nSlices / nFactor );
+            cal2.pixelDepth = cal.pixelHeight;
+            cal2.pixelHeight = cal.pixelDepth;
+            cal2.pixelWidth = cal.pixelWidth;
+        }
+        int w = nSlices;
+        int h = nStep;
+
+        ArrayList<String> paths = new ArrayList<String>();
+        for( int i = 0; i < nSlices; i = i + nStep ) {
+            //print(i);
+
+            if ( i + h > nSlices) h = nSlices - i;
+            imp.setRoi(new Roi(0,i,w,h), false);
+            Slicer slicer = new Slicer();
+            //IJ.run("Reslice [/]...", "output=1.000 start=Top");
+            ImagePlus impr = slicer.reslice( imp );
+            // Calibration
+            impr.setCalibration(cal2);
+            // Rotate image
+            Rotate rt = new Rotate();
+            impr = ( rt.run(imagescience.image.Image.wrap(impr), angle, 0, 0, interpolation, false, false, false) ).imageplus();
+
+            //IJ.run(imp, "Image Sequence... ", "format=TIFF start="+ i*nStep +" save=" + tempSubDir);
+            String path = tempSubDir + "/" + "slice-" + i + ".tif";
+            paths.add(path);
+            IJ.saveAs( impr, "Tiff", path );
+        }
+
+        long timeEnd = System.currentTimeMillis();
+        IJ.log("Processing time: " + 0.001 * (timeEnd - timeStart) + " seconds" );
+        IJ.log("Stop reslicing: " + date.toString() );
+
+//        FolderOpener fo = new FolderOpener();
+//        fo.openAsVirtualStack(true);
+
+        //ImagePlus stack = IJ.createHyperStack("", w, h, nSlices, 1, 1, imp.getBitDepth());
+        //for ( String path: paths ) {
+        //    ImagePlus impt = IJ.openVirtual( path );
+        //    //stack.
+        //    //impt.
+        //}
+
+        
+        //ImagePlus impo = fo.open(tempSubDir);
+        //impo.show();
+        return imp;
+    }
+
+    public static void imglib2Rotate( String pathRect ) {
+        
         try {
-            // open an ImageJ window
-            new ImageJ();
-            
-            String pathRect = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackrecto.tif";
-            //ImagePlus imp = IJ.openImage(pathRect);
-            //imp.show();
-            
+           
             Img< ShortType > img;
             img = new ImgOpener().openImgs( pathRect, new ShortType() ).get(0);
             
@@ -326,7 +399,7 @@ public class XVirtualStack extends VirtualStack {
                     Views.interval( img, new long[] { 200, 200, 5 }, new long[]{ 500, 350, 10 } );
             
             ImageJFunctions.show( view );
-                  
+
             // create an InterpolatorFactory RealRandomAccessible using linear interpolation
             NLinearInterpolatorFactory< ShortType > facInterpolation =
             new NLinearInterpolatorFactory< ShortType >();
@@ -339,8 +412,7 @@ public class XVirtualStack extends VirtualStack {
             double[] max = new double[]{ 300, 400, 10 };
  
             FinalRealInterval interval = new FinalRealInterval( min, max );
-            
-            
+
             //Interval<FloatType> i = new Interval
             //
             final double yScale = 1.0, zScale = 1.0;
@@ -350,48 +422,165 @@ public class XVirtualStack extends VirtualStack {
 		0, yScale, 0, 0,
         	0.0, 0.0, zScale, 0 );
             transform.rotate(2, 45);
-            
+
             Img< ShortType > out = transformImage( interpolant, interval, new ArrayImgFactory< ShortType >(), transform );
-            
+
             ImageJFunctions.show( out );
             // This is still testing
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            //Views.extendZero();//.affine( view, initial);
-
-            
-            // use a View to define an interval (min and max coordinate, inclusive) to display
-            //RandomAccessible< FloatType > view =
-            //        Views.interval( img, new long[] { 200, 200 }, new long[]{ 500, 350 } );
-            
-            //ImageJFunctions.show((RandomAccessibleInterval<FloatType>) view);
-            
-            //Image img = imagescience.image.Image.wrap(imp);
-            
-            //img.imageplus().show();
-            
-            // run the example
-            //Example1c();
-            //try {
-            //Example1d();
-            //ExampleCatmaid();
-            //} catch (ImgIOException ex) {
-//            Logger.getLogger(XVirtualStack.class.getName()).log(Level.SEVERE, null, ex);
-//      }
         } catch (ImgIOException ex) {
             Logger.getLogger(XVirtualStack.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    public static void virtualStackParts( String tempSubDir ) {
+        Img< ? > img;
+        ArrayList< RandomAccessibleInterval< ? > > imgs = new ArrayList< RandomAccessibleInterval< ? > >();
+
+        // create new filename filter
+        FilenameFilter fileNameFilter = new FilenameFilter() {
+            String filter = ".*\\.tif";
+            
+            @Override
+            public boolean accept(File dir, String name) {
+               if( Pattern.matches( filter, name) ) return true;
+               else return false;
+            }
+         };
+
+        File folder = new File(tempSubDir);
+        File[] files = folder.listFiles( fileNameFilter );
+        ArrayList<String> paths = new ArrayList<String>();
+
+        try {
+            for ( File file : files ) {
+
+                img = (Img<?>) new ImgOpener().openImgs( file.getAbsolutePath()  ).get(0);
+
+                int nSlices = (int) img.dimension(2);
+                //ImageJFunctions.show((RandomAccessibleInterval<ByteType>) img);
+                //ImageJFunctions.show((RandomAccessibleInterval<ByteType>) Views.hyperSlice( img, 2, nSlices/2 ) );
+                IJ.log(file.getName() + " name: " + nSlices);
+                for ( int i = 0; i < nSlices; i++ ) {
+                    RandomAccessibleInterval< ? > view = Views.hyperSlice( img, 2, i );
+                    imgs.add(view);
+                }
+            }
+        } catch (ImgIOException ex) {
+            Logger.getLogger(XVirtualStack.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //View v = new View( imgs.get(0) );
+        //Views.interval( imgs.get(0), new long[] { 200, 200 }, new long[]{ 500, 350 } );
+//        StackView sv = new StackView( imgs );
+        // use a View to define an interval (min and max coordinate, inclusive) to display
+        //RandomAccessibleInterval< ? > view = Views.interval( sv, new long[] { 20, 20, 5 }, new long[]{ 50, 35, 10 } );
+        //ImageJFunctions.show((RandomAccessibleInterval<ByteType>) view);
+//        ImageJFunctions.show((RandomAccessibleInterval<ByteType>) sv);
+        //IJ.run("Bio-Formats Importer", "open=[C:\\Users\\Michael\\Desktop\\BiDiFuse\\BiDiFuse, channel 1_mem_1.tif] color_mode=Default group_files view=Hyperstack stack_order=XYCZT use_virtual_stack contains=[] name=[C:\\Users\\Michael\\Desktop\\BiDiFuse\\BiDiFuse, channel 1_mem_<1-2>.tif]");
+
+    }
+    
+        public static < T extends NumericType< T > & NativeType< T > > void imglibAll() {
+
+        String pathRect = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackrecto.tif";
+        String tempDir = IJ.getDirectory("temp") + "/bidifuse_temp/reslice";
+        String tempSubDir = BiDiFuse_Fusion.makePath(tempDir, 0);
+        ImagePlus imp = IJ.openImage(pathRect);
+        //imp.show();
+        int interpolation = 1;
+        double angle = 10.0;
+        String direction = BiDiFuse_Fusion.ORIENTATION_XZ;
+
+        // Wrap the existing ImagePlus in a Img
+        
+        Img<T> img = ImageJFunctions.wrap(imp);
+        // Show it
+        ImageJFunctions.show(img);
+        
+        // Extend the Img with black border to have the point of rotation in the middle
+        T var = img.firstElement().createVariable();
+        RandomAccessible<T> imgE;
+        //imgE = Views.extendValue( img, var );
+        imgE = Views.extendZero( img );
+        // Show it
+        //int halfSize
+        long[] min = {-10,-10,-10};
+        long[] max = {300,300,200};
+        long[] translation = {-30,-20,4};
+        FinalInterval interval = new FinalInterval( min, max );
+        //ImageJFunctions.show( Views.interval( imgE, interval ) );
+        
+        // Rotate the Img along the Z-axis (1) by using TransformJ per 100 slices?
+        TranslationTransform t = new TranslationTransform( translation );
+        TransformView tv = new TransformView( imgE , t );
+        //TransformView tv2 = new TransformView( tv , t );
+        // Show it
+        //ImageJFunctions.show( Views.interval( tv, interval ) );
+        
+        // create an InterpolatorFactory RealRandomAccessible using linear interpolation
+        NLinearInterpolatorFactory< T > facInterpolation =
+        new NLinearInterpolatorFactory< T >();
+
+        RealRandomAccessible< T > interpolant = Views.interpolate( Views.extendMirrorSingle( img ), facInterpolation );
+
+        final double yScale = 1.0, zScale = 1.0;
+        final AffineTransform3D transform = new AffineTransform3D();
+        transform.set(
+            1.0, 0.0, 0, 0,
+            0.0, yScale, 0, 0,
+            0.0, 0.0, zScale, 0 );
+        transform.rotate(2, 1.0);
+        FinalRealInterval interval2 = transform.estimateBounds(img);
+        Img< T > out = transformImage( interpolant, interval2, new ArrayImgFactory< T >(), transform );
+
+        ImageJFunctions.show( out );
+            // This is still testing
+    }
+    
+    public static void main( String[] args )
+    {
+        // open an ImageJ window
+        new ImageJ();
+        String pathRect = "F:/MB/BiDiFuse_7008brainx10Wz1Ex543stackrecto.tif";
+        String tempDir = IJ.getDirectory("temp") + "/bidifuse_temp/reslice";
+        String tempSubDir = BiDiFuse_Fusion.makePath(tempDir, 0);
+        ImagePlus imp = IJ.openImage(pathRect);
+        //imp.show();
+        int interpolation = 1;
+        double angle = 10.0;
+        String direction = BiDiFuse_Fusion.ORIENTATION_XZ;
+        
+        imglibAll();
+                
+        //resliceTest( tempSubDir, imp, angle, direction, interpolation );
+    
+        
+        
+    }
 }
+
+
+        // launch the Bio-Formats Importer plugin to open each group of files
+        //for ( File file : files ) {
+        //  String id = file.getAbsolutePath();
+        //  String params =
+        //    "location=[Local machine] " +
+        //    "windowless=true " +
+        //    "groupFiles=true " +
+        //    "id=[" + id + "] ";
+        //  new LociImporter().run(params);
+        //}
+        
+        //VirtualStack vs = new VirtualStack();// imp.getWidth(), imp.getHeight(), imp.getProcessor().getColorModel(), tempSubDir);
+        //for ( File file : files ) {
+        //    ImagePlus impt = IJ.openVirtual( file.getAbsolutePath() );
+        //    for ( int i = 0; i < impt.getNSlices(); i++ ) {
+        //        vs.addSlice(file.getName());
+        //        vs.addSlice( file.getName() + "_" + i, impt.getStack().getProcessor(i+1) );
+        //    }
+        //}
+        
+        //ImagePlus impv = new ImagePlus("vs", vs);
+        //impv.show();
+
+        //net.imglib2.type.Type T = new ByteType();
